@@ -1,14 +1,13 @@
 import React, { useState, useEffect } from 'react';
 import { User, PersonalData } from '../types';
 import { saveUser } from '../services/storageService';
-import { ChevronRight, Save, User as UserIcon, MapPin, CreditCard, Lock, Phone } from 'lucide-react';
+import { ChevronRight, Save, User as UserIcon, MapPin, CreditCard, Lock, Phone, Loader2 } from 'lucide-react';
 
 interface UserRegistrationProps {
   user: User;
   onComplete: (updatedUser: User) => void;
 }
 
-// Interfaces para a API do IBGE
 interface IBGEUF {
   id: number;
   sigla: string;
@@ -22,12 +21,13 @@ interface IBGECity {
 
 const UserRegistration: React.FC<UserRegistrationProps> = ({ user, onComplete }) => {
   const [step, setStep] = useState(1);
+  const [isSaving, setIsSaving] = useState(false);
   const [formData, setFormData] = useState<PersonalData>({
     fullName: '',
     rg: '',
     birthDate: '',
     phone: '',
-    secondaryId: user.personalData?.secondaryId || '', // Load secondary ID if admin set it (e.g. matricula linked to cpf)
+    secondaryId: user.personalData?.secondaryId || '', 
     voterTitle: '',
     reservistId: '',
     pisPasep: '',
@@ -48,12 +48,10 @@ const UserRegistration: React.FC<UserRegistrationProps> = ({ user, onComplete })
     }
   });
 
-  // States para listas de localidade
   const [ufList, setUfList] = useState<IBGEUF[]>([]);
   const [cityList, setCityList] = useState<IBGECity[]>([]);
   const [loadingCities, setLoadingCities] = useState(false);
 
-  // Busca Estados ao carregar o componente
   useEffect(() => {
     fetch('https://servicodados.ibge.gov.br/api/v1/localidades/estados?orderBy=nome')
       .then(res => res.json())
@@ -61,7 +59,6 @@ const UserRegistration: React.FC<UserRegistrationProps> = ({ user, onComplete })
       .catch(err => console.error("Erro ao buscar estados:", err));
   }, []);
 
-  // Busca Cidades quando o Estado muda
   useEffect(() => {
     if (formData.state) {
       setLoadingCities(true);
@@ -91,14 +88,21 @@ const UserRegistration: React.FC<UserRegistrationProps> = ({ user, onComplete })
     }));
   };
 
-  const handleSubmit = () => {
+  const handleSubmit = async () => {
+    setIsSaving(true);
     const updatedUser: User = {
       ...user,
       isFirstAccess: false,
       personalData: formData
     };
-    saveUser(updatedUser);
-    onComplete(updatedUser);
+    try {
+        await saveUser(updatedUser);
+        onComplete(updatedUser);
+    } catch (error) {
+        alert("Erro ao salvar cadastro. Tente novamente.");
+    } finally {
+        setIsSaving(false);
+    }
   };
 
   const steps = [
@@ -127,7 +131,6 @@ const UserRegistration: React.FC<UserRegistrationProps> = ({ user, onComplete })
                 </h2>
                 
                 <div className="space-y-4">
-                    {/* Read-Only Credentials Section */}
                     <div className="bg-blue-50 p-4 rounded-xl border border-blue-100 space-y-3">
                          <div>
                             <label className="block text-xs font-medium text-blue-700 mb-1">
@@ -154,7 +157,6 @@ const UserRegistration: React.FC<UserRegistrationProps> = ({ user, onComplete })
 
                     <div className="border-t border-gray-100 my-2"></div>
 
-                    {/* Personal Data Inputs */}
                     <input type="text" placeholder="Nome Completo" className="w-full p-3 border rounded-xl bg-gray-50 focus:bg-white focus:ring-2 focus:ring-blue-500 outline-none transition-colors" value={formData.fullName} onChange={e => handleChange('fullName', e.target.value)} />
                     
                     <div className="grid grid-cols-2 gap-3">
@@ -167,7 +169,6 @@ const UserRegistration: React.FC<UserRegistrationProps> = ({ user, onComplete })
                         <input type="tel" placeholder="Telefone com DDD" className="w-full pl-10 p-3 border rounded-xl bg-gray-50" value={formData.phone} onChange={e => handleChange('phone', e.target.value)} />
                     </div>
 
-                    {/* Conditional Input Logic */}
                     {user.idType === 'matricula' ? (
                          <div className="relative">
                             <CreditCard className="absolute left-3 top-3.5 text-gray-400" size={18}/>
@@ -207,7 +208,6 @@ const UserRegistration: React.FC<UserRegistrationProps> = ({ user, onComplete })
                 <div className="space-y-3">
                     <input type="text" placeholder="CEP" className="w-full p-3 border rounded-xl bg-gray-50" value={formData.cep} onChange={e => handleChange('cep', e.target.value)} />
                     
-                    {/* State and City Selects */}
                     <div className="grid grid-cols-3 gap-3">
                         <div className="col-span-1">
                             <select 
@@ -215,7 +215,7 @@ const UserRegistration: React.FC<UserRegistrationProps> = ({ user, onComplete })
                                 value={formData.state} 
                                 onChange={e => {
                                     handleChange('state', e.target.value);
-                                    handleChange('city', ''); // Reset city when state changes
+                                    handleChange('city', '');
                                 }}
                             >
                                 <option value="">UF</option>
@@ -289,8 +289,8 @@ const UserRegistration: React.FC<UserRegistrationProps> = ({ user, onComplete })
                 Próximo <ChevronRight size={20} />
             </button>
         ) : (
-            <button onClick={handleSubmit} className="flex-1 bg-green-600 text-white py-3 rounded-xl font-semibold flex justify-center items-center gap-2 shadow-lg shadow-green-200">
-                Salvar e Acessar <Save size={20} />
+            <button onClick={handleSubmit} disabled={isSaving} className="flex-1 bg-green-600 text-white py-3 rounded-xl font-semibold flex justify-center items-center gap-2 shadow-lg shadow-green-200 disabled:opacity-50">
+                {isSaving ? <Loader2 className="animate-spin" /> : <>Salvar e Acessar <Save size={20} /></>}
             </button>
         )}
       </div>

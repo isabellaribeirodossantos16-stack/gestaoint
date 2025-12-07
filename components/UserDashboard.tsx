@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { User, AppContent } from '../types';
 import { getContent } from '../services/storageService';
-import { FileText, Image, File, Download, LogOut, ExternalLink, Link as LinkIcon } from 'lucide-react';
+import { FileText, Image, File, Download, LogOut, ExternalLink, Link as LinkIcon, Loader2 } from 'lucide-react';
 
 interface UserDashboardProps {
   user: User;
@@ -10,14 +10,19 @@ interface UserDashboardProps {
 
 const UserDashboard: React.FC<UserDashboardProps> = ({ user, onLogout }) => {
   const [contents, setContents] = useState<AppContent[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
-    // Filter content: Show if 'all' is in targets OR if user.id is in targets
-    const allContent = getContent();
-    const filteredContent = allContent.filter(c => 
-        c.targetUserIds.includes('all') || c.targetUserIds.includes(user.id)
-    );
-    setContents(filteredContent);
+    const fetchContent = async () => {
+        setIsLoading(true);
+        const allContent = await getContent();
+        const filteredContent = allContent.filter(c => 
+            c.targetUserIds.includes('all') || c.targetUserIds.includes(user.id)
+        );
+        setContents(filteredContent);
+        setIsLoading(false);
+    };
+    fetchContent();
   }, [user]);
 
   const getIcon = (type: string | undefined, contentType: 'file' | 'link') => {
@@ -33,7 +38,6 @@ const UserDashboard: React.FC<UserDashboardProps> = ({ user, onLogout }) => {
 
   const handleDownload = (content: AppContent) => {
     if (content.contentType === 'file' && content.fileData) {
-        // Create a temporary link to download the base64 data
         const link = document.createElement('a');
         link.href = content.fileData;
         link.download = content.fileName || 'arquivo';
@@ -54,7 +58,7 @@ const UserDashboard: React.FC<UserDashboardProps> = ({ user, onLogout }) => {
       <header className="bg-white p-6 shadow-sm sticky top-0 z-10">
         <div className="flex justify-between items-center">
             <div>
-                <h1 className="text-xl font-bold text-gray-800">Olá, {user.personalData?.fullName.split(' ')[0]}</h1>
+                <h1 className="text-xl font-bold text-gray-800">Olá, {user.personalData?.fullName.split(' ')[0] || user.username}</h1>
                 <p className="text-gray-400 text-xs mt-1">Matrícula: {user.username}</p>
             </div>
             <button onClick={onLogout} className="p-2 bg-gray-100 rounded-full hover:bg-gray-200 text-gray-600">
@@ -66,7 +70,11 @@ const UserDashboard: React.FC<UserDashboardProps> = ({ user, onLogout }) => {
       <div className="p-4 space-y-4">
         <h2 className="text-lg font-semibold text-gray-700 ml-1">Arquivos & Links Recentes</h2>
         
-        {contents.length === 0 ? (
+        {isLoading ? (
+            <div className="flex justify-center py-20">
+                <Loader2 className="animate-spin text-blue-600" size={32} />
+            </div>
+        ) : contents.length === 0 ? (
             <div className="text-center py-20 text-gray-400">
                 <File className="w-16 h-16 mx-auto mb-4 opacity-20" />
                 <p>Nenhum conteúdo disponível no momento.</p>

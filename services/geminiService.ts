@@ -2,11 +2,10 @@ import { GoogleGenAI } from "@google/genai";
 
 // NOTE: In a real production app, never expose API keys on the client side.
 // This is for demonstration using the provided environment variable pattern.
-const apiKey = process.env.API_KEY || ''; 
-const ai = new GoogleGenAI({ apiKey });
+const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
 
 export const generateSummary = async (fileName: string, fileType: string): Promise<string> => {
-  if (!apiKey) return "Descrição automática indisponível (Sem API Key).";
+  if (!process.env.API_KEY) return "Descrição automática indisponível (Sem API Key).";
 
   try {
     const model = 'gemini-2.5-flash';
@@ -25,7 +24,7 @@ export const generateSummary = async (fileName: string, fileType: string): Promi
 };
 
 export const chatWithBot = async (history: string[], message: string): Promise<string> => {
-    if (!apiKey) return "O Chatbot está indisponível no momento.";
+    if (!process.env.API_KEY) return "O Chatbot está indisponível no momento.";
     
     try {
         const prompt = `Você é um assistente de RH útil e amigável da empresa.

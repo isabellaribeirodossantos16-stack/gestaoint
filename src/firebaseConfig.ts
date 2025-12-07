@@ -1,0 +1,1 @@
+// Arquivo movido para a raiz. Por favor, use ../firebaseConfig.ts
