@@ -1,0 +1,17 @@
+/* Minimal index.css to avoid 404 and provide base styles */
+html, body, #root {
+  height: 100%;
+}
+body {
+  margin: 0;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  font-family: Inter, system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+  background: #f8fafc;
+  color: #0f172a;
+}
+
+/* Small utility to ensure root fills viewport */
+#root {
+  display: block;
+}

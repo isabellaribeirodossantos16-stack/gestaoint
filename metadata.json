@@ -1,8 +1,5 @@
 {
-  "name": "16.2 Portal Colaborador & Menus",
-  "description": "Aplicativo corporativo para gestão de menus, documentos e cadastro de funcionários com suporte de IA Gemini.",
-  "requestFramePermissions": [
-    "camera",
-    "microphone"
-  ]
+  "name": "20 GestorPro - projeto no github",
+  "description": "Sistema completo de gestão de clientes, planos e financeiro com alertas de vencimento, controle de licença e backup.",
+  "requestFramePermissions": []
 }
